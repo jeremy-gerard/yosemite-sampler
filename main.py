@@ -3,6 +3,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from time import sleep
+from datetime import datetime
 
 from dotenv import load_dotenv
 import requests
@@ -69,20 +70,26 @@ def send_email_alert(message):
 
 
 if __name__ == "__main__":
-    retry_delay_in_minutes = 5
+    retry_delay_in_minutes = 1
+    campground_url = "https://www.recreation.gov/camping/campgrounds/232447" # Yosemite
+    # campground_url="https://www.recreation.gov/camping/campgrounds/233098", # Maumelle
     while True:
-        available_recs = check_availability(
-            driver=webdriver.Chrome(),
-            campground_url="https://www.recreation.gov/camping/campgrounds/233098", # Maumelle
-            # campground_url="https://www.recreation.gov/camping/campgrounds/232447", # Yosemite
-            date="Monday July 17, 2023",
-        )
-        if len(available_recs) > 0:
-            print(f"[green]Availability found![/green]\n\n{available_recs}\n\n")
-            print("Sending email alert...")
-            send_email_alert(str(available_recs))
-            break
-        else:
-            print(f"No availability yet. Checking again in {retry_delay_in_minutes} minutes...")
-            sleep(retry_delay_in_minutes * 60)
-        break
+        try:
+            available_recs = check_availability(
+                driver=webdriver.Chrome(),
+                campground_url=campground_url,
+                date="Monday July 17, 2023",
+            )
+            if len(available_recs) > 0:
+                print(f"[green]Availability found![/green]\n\n{available_recs}\n\n")
+                print("Sending email alert...")
+                send_email_alert(f"{available_recs}\n\n{campground_url}")
+                break
+            else:
+                print(f"No availability yet. Checking again in {retry_delay_in_minutes} minute(s)...")
+                sleep(retry_delay_in_minutes * 60)
+        except Exception as e:
+            print(f"[red]Error:\n\n{e}\n\n[/red]")
+            with open("error.log", "a") as f:
+                f.write(f"{datetime.now()}: {e}\n-------------\n")
+            continue
