@@ -1,3 +1,5 @@
 notebooks
 geckodriver.log
 dot.env
+.venv
+error.log
